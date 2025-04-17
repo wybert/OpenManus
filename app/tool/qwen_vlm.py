@@ -1,8 +1,9 @@
 
 from typing import Optional
 from app.tool.base import BaseTool, ToolResult
-import requests
 import base64
+from openai import OpenAI
+import os
 
 class QwenVLMTool(BaseTool):
     name: str = "qwen_vlm"
@@ -16,26 +17,32 @@ class QwenVLMTool(BaseTool):
         "required": ["image_path", "question"]
     }
 
+    def __init__(self):
+        super().__init__()
+        self.client = OpenAI(
+            api_key=os.getenv("QWEN_API_KEY"),
+            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+        )
+
     async def execute(self, image_path: str, question: str) -> ToolResult:
         try:
             # Read and encode image
             with open(image_path, "rb") as image_file:
                 encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
             
-            # Call Qwen VLM API (replace with actual endpoint and headers)
-            response = requests.post(
-                "YOUR_QWEN_API_ENDPOINT",
-                headers={"Authorization": "YOUR_API_KEY"},
-                json={
-                    "image": encoded_image,
-                    "question": question
-                }
+            # Call Qwen VLM API using OpenAI client
+            completion = self.client.chat.completions.create(
+                model="qwen-vl-plus",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}
+                    ]
+                }]
             )
             
-            if response.status_code == 200:
-                return ToolResult(output=response.json()["answer"])
-            else:
-                return ToolResult(error=f"API request failed: {response.status_code}")
+            return ToolResult(output=completion.choices[0].message.content)
                 
         except Exception as e:
             return ToolResult(error=f"Error analyzing image: {str(e)}")
