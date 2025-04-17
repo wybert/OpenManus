@@ -8,6 +8,7 @@ import os
 class QwenVLMTool(BaseTool):
     name: str = "qwen_vlm"
     description: str = "Analyzes remote sensing images using Qwen VLM API"
+    client: OpenAI = None
     parameters: dict = {
         "type": "object",
         "properties": {
