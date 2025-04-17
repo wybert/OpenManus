@@ -37,6 +37,7 @@ class Manus(ToolCallAgent):
             BrowserUseTool(),
             StrReplaceEditor(),
             AskHuman(),
+            QwenVLMTool(),
             Terminate(),
         )
     )
